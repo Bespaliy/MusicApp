@@ -1,4 +1,5 @@
 import { Image, StyleSheet, View } from 'react-native';
+import { Audio } from 'expo-av';
 import { Song } from '../../common/type/song.type';
 import { 
   ButtonPause, 
@@ -8,25 +9,49 @@ import {
   TitleContainer,
   MusicBar } from './Song.style';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Sound } from 'expo-av/build/Audio';
 
 const SongItem = (props: Song) => {
+  const [isPaused, setTogglePaused] = useState(true);
+  const { title, duration, artwork, artist } = props;
+  const [sound, setSound] = useState<Sound>();
+  
+  async function playSound() {
+    console.log('Loading Sound');
+    const { sound } = await Audio.Sound.createAsync(require('../../../skriptonit_-_belmejn_(z2.fm).mp3')
+    );
+    setSound(sound);
 
-  const [isPaused, setTogglePaused] = useState(false);
-  const { title, duration, img, auther } = props;
+    console.log('Playing Sound');
+    setTogglePaused(!isPaused);
+    await sound.playAsync();
+  }
+
+  useEffect(() => {
+    if (sound) {
+      !isPaused || sound.pauseAsync();
+    }
+    return sound
+      ? () => {
+          console.log('Unloading Sound');
+          sound.unloadAsync();
+        }
+      : undefined;
+  }, [isPaused]);
 
   return (
     <View style={styles.songMain}>
       <Image
         resizeMode="cover"
         style={styles.songImg}
-        source={{uri: img}} />
+        source={{uri: artwork}} />
       <TitleContainer>
-        <Title>{auther} - {title}</Title>   
+        <Title>{artist} - {title}</Title>   
       </TitleContainer>
       <View style={styles.songBar}>
         <Icon name="backward" style={styles.ward} size={50}/>
-        <ButtonPause onPress={() => setTogglePaused(!isPaused)}>
+        <ButtonPause onPress={playSound}>
           {isPaused ||
             <>
               <ButtonPauseStick />

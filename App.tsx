@@ -1,6 +1,8 @@
 import { StyleSheet, Text, View, FlatList, AppRegistry } from 'react-native';
 import { ApolloClient, InMemoryCache, ApolloProvider, gql, useQuery, HttpLink } from '@apollo/client';
 import SongPage from './src/components/page/SongPage';
+// import { PlaybackService } from './service';
+// import TrackPlayer from 'react-native-track-player';
 
 const client = new ApolloClient({
   link: new HttpLink({
@@ -57,6 +59,8 @@ export default function App() {
 }
 
 AppRegistry.registerComponent('MusicApp', () => App);
+// TrackPlayer.registerPlaybackService(() => PlaybackService);
+
 
 const styles = StyleSheet.create({
   container: {
