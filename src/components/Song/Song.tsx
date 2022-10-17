@@ -1,68 +1,109 @@
 import { Image, StyleSheet, View } from 'react-native';
-import { Audio } from 'expo-av';
+import { Audio, AVPlaybackSource } from 'expo-av';
 import { Song } from '../../common/type/song.type';
-import { 
-  ButtonPause, 
-  ButtonPauseStick, 
-  ButtonResumeTringle, 
+import {
+  ButtonPause,
+  ButtonPauseStick,
+  ButtonResumeTringle,
   Title,
   TitleContainer,
-  MusicBar } from './Song.style';
+  MusicBar,
+  MusicBarBtn
+} from './Song.style';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { useState, useEffect } from 'react';
-import { Sound } from 'expo-av/build/Audio';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import {Slider} from '@miblanchard/react-native-slider';
 
 const SongItem = (props: Song) => {
   const [isPaused, setTogglePaused] = useState(true);
-  const { title, duration, artwork, artist } = props;
-  const [sound, setSound] = useState<Sound>();
+  const [duration, setDuration] = useState(0);
+  const [timerNumber, setTimerNumber] = useState(0);
+  const { title, artwork, artist } = props;
+
+  const sound = useRef(new Audio.Sound());
   
-  async function playSound() {
-    console.log('Loading Sound');
-    const { sound } = await Audio.Sound.createAsync(require('../../../skriptonit_-_belmejn_(z2.fm).mp3')
-    );
-    setSound(sound);
-
-    console.log('Playing Sound');
-    setTogglePaused(!isPaused);
-    await sound.playAsync();
-  }
-
   useEffect(() => {
-    if (sound) {
-      !isPaused || sound.pauseAsync();
-    }
-    return sound
-      ? () => {
-          console.log('Unloading Sound');
-          sound.unloadAsync();
+    loadAudio();
+  }, []);
+
+  const playAudio = async () => {
+    try {
+      const result = await sound.current.getStatusAsync();
+      if (result.isLoaded) {
+        if (result.isPlaying === false) {
+          sound.current.playAsync();
+          setTogglePaused(!isPaused);
+          const interval = Math.fround((((result.positionMillis/1000) * 100)/(result.durationMillis/1000))/100);
+          setDuration(interval);
+          const num = setInterval(async () => {
+            const { positionMillis, playableDurationMillis } = await sound.current.getStatusAsync();
+            const interval = Math.fround((((positionMillis/1000) * 100)/(playableDurationMillis/1000))/100);
+            setDuration(interval);
+          }, 500);
+          setTimerNumber(num);
         }
-      : undefined;
-  }, [isPaused]);
+      }
+    } catch (error) {
+      console.log(error);
+     }
+  };
+
+  const pauseAudio = async () => {
+    try {
+      const result = await sound.current.getStatusAsync();
+      if (result.isLoaded) {
+        if (result.isPlaying === true) {
+          clearInterval(timerNumber);
+          sound.current.pauseAsync();
+          setTogglePaused(!isPaused);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+     }
+  };
+
+  const loadAudio = async () => {
+    const checkLoading = await sound.current.getStatusAsync();
+    if (checkLoading.isLoaded === false) {
+      try {
+        const result = await sound.current.loadAsync(require('../../../skriptonit_-_belmejn_(z2.fm).mp3'));
+        if (result.isLoaded === false) {
+          console.log('Error in Loading Audio');
+        }
+
+      } catch (error) {
+        console.error(error);
+      }
+    };
+  }
 
   return (
     <View style={styles.songMain}>
       <Image
         resizeMode="cover"
         style={styles.songImg}
-        source={{uri: artwork}} />
+        source={{ uri: artwork }} />
       <TitleContainer>
-        <Title>{artist} - {title}</Title>   
+        <Title>{artist} - {title}</Title>
       </TitleContainer>
       <View style={styles.songBar}>
-        <Icon name="backward" style={styles.ward} size={50}/>
-        <ButtonPause onPress={playSound}>
+        <Icon name="backward" style={styles.ward} size={50} />
+        <ButtonPause onPress={pauseAudio}>
           {isPaused ||
             <>
               <ButtonPauseStick />
               <ButtonPauseStick />
             </>
           }
-          {!isPaused || <ButtonResumeTringle />}
+          {!isPaused || <ButtonResumeTringle onPress={playAudio} />}
         </ButtonPause>
-        <Icon name="forward" style={styles.ward} size={50}/>
+        <Icon name="forward" style={styles.ward} size={50} />
       </View>
-      <MusicBar></MusicBar>
+      <MusicBar>
+        {/* <MusicBarBtn></MusicBarBtn> */}
+        <Slider value={duration} />
+      </MusicBar>
     </View>
   )
 }

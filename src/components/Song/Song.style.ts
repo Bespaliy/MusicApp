@@ -12,7 +12,7 @@ export const ButtonPause = styled.TouchableOpacity`
   padding: 0 15px;
 `
 
-export const ButtonResumeTringle = styled.View`
+export const ButtonResumeTringle = styled.TouchableOpacity`
   width: 0;
   height: 0;
   background-color: transparent;
@@ -45,8 +45,19 @@ export const Title = styled.Text`
 `
 
 export const MusicBar = styled.View`
-  background: white;
-  height: 2px;
+  /* background: white; */
+  /* height: 2px; */
   width: 80%;
-  margin-top: 70px;
+  margin-top: 40px;
+  /* position: relative; */
+`
+
+export const MusicBarBtn = styled.Pressable`
+  background: white;
+  border-radius: 100%;
+  height: 15px;
+  width: 15px;
+  position: absolute;
+  z-index: 999;
+  top: -7px;
 `
